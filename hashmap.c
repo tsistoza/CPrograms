@@ -30,20 +30,10 @@ bool contains(int num, unordered_hashmap* dict);
 Node* get(int key, unordered_hashmap* dict);
 void resize_map(unordered_hashmap* dict);
 void printMap(unordered_hashmap* dict);
+void unitTests();
 
 int main() {
-    // Unit Tests
-    unordered_hashmap* map = init_map();
-    for (int i=0; i<5; i++)
-        insert_map(i, 1, map);
-    for (int i=0; i<5; i++)
-        if (contains(i, map)) get(i, map)->value++;
-
-    erase(4, map);
-    erase(3, map);
-    printMap(map);
-    clear_map(map);
-    free(map);
+    unitTests(); // Verify
     return 0;
 }
 
@@ -166,4 +156,65 @@ void printMap(unordered_hashmap* dict) {
     printf("-----------------\n");
     printf("END OF MAP\n\n");
     return;
+}
+
+void unitTests() {
+    // Unit Tests
+    int numTestPassed = 0;
+
+    // TEST 1
+    unordered_hashmap* map = init_map();
+    if (map == NULL) {
+        fprintf(stderr, "MAP FAILED INIT. TEST 1 FAILED\n");
+        fprintf(stdout, "Num Tests Passed: %d\n", numTestPassed);
+        exit(EXIT_FAILURE);
+    }
+    numTestPassed++;
+    
+    // TEST 2
+    for (int i=0; i<5; i++)
+        insert_map(i, 1, map);
+    if (map->size < 4) {
+        fprintf(stderr, "ERROR: map->size is not correct. TEST 2 FAILED\n");
+        fprintf(stdout, "Num Tests Passed: %d\n", numTestPassed);
+        exit(EXIT_FAILURE);
+    }
+    numTestPassed++;
+
+    // TEST 3
+    int i=0;
+    for (Node* curr = map->front; curr!=NULL; curr=curr->next, i++) {
+        if (i == curr->key) continue;
+        fprintf(stderr, "ERROR: map->key is not correct. TEST 3 FAILED\n");
+        fprintf(stdout, "Num Tests Passed: %d\n", numTestPassed);
+        exit(EXIT_FAILURE);
+    }
+    numTestPassed++;
+
+    // TEST 4
+    for (int i=0; i<5; i++)
+        if (contains(i, map)) get(i, map)->value++;
+    for (Node* curr = map->front; curr!=NULL; curr=curr->next) {
+        if (curr->value == 2) continue;
+        fprintf(stderr, "ERROR: map->values is not correct. TEST 4 FAILED\n");
+        fprintf(stdout, "Num Tests Passed: %d\n", numTestPassed);
+        exit(EXIT_FAILURE);
+    }
+    numTestPassed++;
+
+    // TEST 5
+    erase(4, map);
+    erase(3, map);
+    for (Node* curr = map->front; curr!=NULL; curr=curr->next) {
+        if (curr->key != 3 && curr->key != 4) continue;
+        fprintf(stderr, "ERROR: map->values is not correct. TEST 5 FAILED\n");
+        fprintf(stdout, "Num Tests Passed: %d\n", numTestPassed);
+        exit(EXIT_FAILURE);
+    }
+    numTestPassed++;
+
+    printMap(map);
+    clear_map(map);
+    free(map);
+    printf("TESTS 5/5 PASSED\n");
 }
