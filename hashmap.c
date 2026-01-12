@@ -4,7 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define DEFAULT 100
+#define DEFAULT 10
+#define FACTOR_THRESHOLD 0.75
 
 typedef struct Node {
     int key;
@@ -29,6 +30,7 @@ void erase(int key, unordered_hashmap* dict);
 bool contains(int num, unordered_hashmap* dict);
 Node* get(int key, unordered_hashmap* dict);
 void resize_map(unordered_hashmap* dict);
+void printMapStats(unordered_hashmap* dict);
 void printMap(unordered_hashmap* dict);
 void unitTests();
 
@@ -38,7 +40,7 @@ int main() {
 }
 
 unordered_hashmap* init_map() {
-    printf("CREATING HASHMAP\n");
+    //printf("CREATING HASHMAP\n");
     unordered_hashmap* newMap = malloc(sizeof(unordered_hashmap));
     newMap->capacity = DEFAULT;
     newMap->data = malloc(newMap->capacity * sizeof(Node*));
@@ -69,24 +71,26 @@ void clear_map(unordered_hashmap* dict) {
 }
 
 int hash_function(int key, int capacity) {
-    key ^= key >> capacity;
-    key *= 0x45d9f3bU;
-    key ^= key >> capacity;
-    key *= 0x45d9f3bU;
-    key ^= key >> capacity;
     return key % capacity;
 }
 
 bool insert_map(int key, int val, unordered_hashmap* dict) {
-    printf("INSERTING MAP\n");
+    //printf("INSERTING MAP\n");
     if (contains(key, dict)) return false;
     
-    int index = hash_function(key, dict->capacity); // Collision Check
+    float loadFactor = ((float) dict->size / (float) dict->capacity);
+    //printf("Load Factor = %.2g\n", loadFactor);
+    if (loadFactor >= FACTOR_THRESHOLD)
+        resize_map(dict);
+
+    int index = hash_function(key, dict->capacity);
+    //printf("key = %d, index = %d, capacity = %d\n", key, index, dict->capacity);
     if (dict->data[index] != NULL) {
-        printf("COLLISION");
-        return false;
+        resize_map(dict);
+        index = hash_function(key, dict->capacity);
+        //printf("key = %d, index = %d, capacity = %d\n", key, index, dict->capacity);
     }
-    printf("index = %d\n", index);
+
     dict->data[index] = malloc(sizeof(Node));
     dict->data[index]->key = key;
     dict->data[index]->value = val;
@@ -143,14 +147,55 @@ bool contains(int key, unordered_hashmap* dict) {
     return false;
 }
 
+void resize_map(unordered_hashmap* dict) {
+    //printf("Resizing Map\n");
+    Node* curr = dict->front;
+    while (curr != NULL) { // CLEAR ENTRIES, DONT DELETE ENTRIES
+        int index = hash_function(curr->key, dict->capacity);
+        dict->data[index] = NULL;
+        curr = curr->next;
+    }
+
+    dict->capacity*=2;
+    Node** tempData = realloc(dict->data, dict->capacity*sizeof(Node*));
+    if (tempData == NULL) {
+        free(dict);
+        clear_map(dict);
+        fprintf(stderr, "ERROR: Reallocation Failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    dict->data = tempData;
+    for (int i=0; i<dict->capacity; i++)
+        dict->data[i] = NULL;
+    
+    curr = dict->front;
+    while (curr != NULL) { // Enter Entries into map
+        int index = hash_function(curr->key, dict->capacity);
+        dict->data[index] = curr;
+        curr = curr->next;
+    }
+    return;
+}
+
+void printMapStats(unordered_hashmap* dict) {
+    printf("\n\n");
+    printf("Hashmap stats: \n");
+    printf("-----------------\n");
+    float loadFactor = ((float)dict->size / (float)dict->capacity);
+    printf("size: %d, capacity: %d, Load Factor: %.2g\n", dict->size, dict->capacity, loadFactor);
+    printf("-----------------\n");
+    return;
+}
+
 void printMap(unordered_hashmap* dict) {
     printf("\n\n");
-    printf("{ key --> value }\n\n");
+    printf("{ key --> value, index = x }\n\n");
     printf("START OF MAP\n");
     printf("-----------------\n");
     Node* currPtr = dict->front;
     while (currPtr != NULL) {
-        printf("{ %d --> %d }\n", currPtr->key, currPtr->value);
+        printf("{ %d --> %d, index = %d }\n", currPtr->key, currPtr->value, hash_function(currPtr->key, dict->capacity));
         currPtr = currPtr->next;
     }
     printf("-----------------\n");
@@ -213,8 +258,18 @@ void unitTests() {
     }
     numTestPassed++;
 
+    // TEST 6
+    for (int i=5; i<15; i++)
+        insert_map(i, 1, map);
+    if (map->capacity < 2*DEFAULT) {
+        fprintf(stderr, "ERROR: map has not been resized\n");
+        fprintf(stdout, "Num Tests Passed: %d\n", numTestPassed);
+        exit(EXIT_FAILURE);
+    }
+
+    printMapStats(map);
     printMap(map);
     clear_map(map);
     free(map);
-    printf("TESTS 5/5 PASSED\n");
+    printf("TESTS 6/6 PASSED\n");
 }
