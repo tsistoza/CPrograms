@@ -19,7 +19,7 @@ void swap(Array* array, int index1, int index2);
 void unit_tests();
 void prettyPrint(Array* array);
 void prettyPrintSection(Array* array, int low, int high);
-void freeArray(Array* array);
+void freeArray(Array** array);
 
 int main() {
     srand(time(NULL));
@@ -97,11 +97,10 @@ void prettyPrintSection(Array* array, int low, int high) {
     printf("} \n\n");
 }
 
-void freeArray(Array* array) {
-    free(array->data);
-    array->data = NULL;
-    free(array);
-    array = NULL;
+void freeArray(Array** array) {
+    free((*array)->data);
+    free(*array);
+    *array = NULL;
     return;
 }
 
@@ -155,14 +154,7 @@ void unit_tests() {
     prettyPrint(array);
 
     // freeArray() test
-    free(array->data);
-    array->data = NULL;
-    if (array->data != NULL) {
-        fprintf(stderr, "did not dealloc properly \n\n");
-        exit(EXIT_FAILURE);
-    }
-    free(array);
-    array = NULL;
+    freeArray(&array);
     if (array != NULL) {
         fprintf(stderr, "did not dealloc properly \n\n");
         exit(EXIT_FAILURE);
