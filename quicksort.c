@@ -116,7 +116,7 @@ void unit_tests() {
     }
     numTestPassed++;
 
-    Array* array = malloc(sizeof(array));
+    Array* array = malloc(sizeof(Array));
     array->capacity = 10;
     array->size = 0;
     array->data = malloc(array->capacity * sizeof(int*));
