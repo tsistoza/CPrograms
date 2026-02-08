@@ -100,7 +100,7 @@ void unit_tests() {
     // priorityQueue_Dequeue
     for (int i=0, prev=INT_MIN; i<3; i++) {
         int curr = priorityQueue_Dequeue(queue);
-        printf("curr min = %d\n", curr);
+        printf("Dequeued %d\n", curr);
         if (prev > curr) {
             priorityQueueFree(&queue);
             fprintf(stderr, "Failed Dequeue\n\n");
@@ -240,6 +240,7 @@ void prettyPrintQueue(PriorityQueue* queue) {
 void priorityQueueFree(PriorityQueue** queue) {
     for (int i=0; i<(*queue)->size; i++)
         free((*queue)->data[i]);
+    free((*queue)->data);
     free(*queue);
     *queue = NULL;
     return;
